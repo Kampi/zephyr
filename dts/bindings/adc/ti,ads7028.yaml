@@ -1,0 +1,85 @@
+# Copyright (c) 2026 Daniel Kampert <DanielKampert@kampis-elektroecke.de>
+#
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Texas Instruments ADS7028, 8 channel 12 bit SAR ADC with SPI interface.
+
+  The analog supply AVDD is the reference voltage, so the channels use
+  zephyr,reference = "ADC_REF_VDD_1" and zephyr,vref-mv = AVDD in mV.
+
+  Averaging is set per channel with zephyr,oversampling (0 to 7, i.e. 1 to
+  128 samples). The device has a single averaging filter for all channels,
+  the driver reprograms it when a read uses a different setting. Averaged
+  results have 16 bit, so zephyr,resolution can be 16 or 12 with averaging
+  and must be 12 without.
+
+  Example:
+
+    &spi0 {
+            adc0: adc@0 {
+                    compatible = "ti,ads7028";
+                    reg = <0>;
+                    spi-max-frequency = <DT_FREQ_M(4)>;
+                    #io-channel-cells = <1>;
+                    #address-cells = <1>;
+                    #size-cells = <0>;
+                    ti,crc;
+                    ti,append-status = "channel-id";
+
+                    channel@0 {
+                            reg = <0>;
+                            zephyr,gain = "ADC_GAIN_1";
+                            zephyr,reference = "ADC_REF_VDD_1";
+                            zephyr,vref-mv = <3300>;
+                            zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+                            zephyr,resolution = <16>;
+                            zephyr,oversampling = <2>;
+                    };
+            };
+    };
+
+compatible: "ti,ads7028"
+
+include: [adc-controller.yaml, spi-device.yaml]
+
+on-bus: spi
+
+properties:
+  "#io-channel-cells":
+    const: 1
+
+  ti,auto-sequence:
+    type: boolean
+    description: |
+      Read multiple channels with the internal channel sequencer
+      (SEQ_MODE = auto) instead of selecting every channel with a register
+      write (manual mode).
+
+  ti,crc:
+    type: boolean
+    description: |
+      Enable the CRC-8 on the SPI interface. Every frame carries a CRC byte in
+      both directions, the driver checks the CRC of all data it receives.
+
+  ti,append-status:
+    type: string
+    default: "none"
+    enum:
+      - "none"
+      - "channel-id"
+      - "status-flags"
+    description: |
+      4 bit field the device appends to every conversion result.
+      - channel-id: the driver checks that the data belong to the requested
+        channel.
+      - status-flags: the driver checks the fixed bits and the CRCERR_IN flag.
+
+  ti,calibrate-on-init:
+    type: boolean
+    description: |
+      Run the ADC offset calibration during initialization. A calibration can
+      also be requested per read with the calibrate flag of adc_sequence.
+
+io-channel-cells:
+  - input
