@@ -1,0 +1,40 @@
+# Copyright (c) 2026 Daniel Kampert <DanielKampert@kampis-elektroecke.de>
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Property name in a variable, a literal comma would split the function arguments
+ADS7028_PROP_CRC := ti,crc
+
+config ADC_ADS7028
+	bool "TI ADS7028 8 channel 12 bit SPI ADC"
+	default y
+	depends on DT_HAS_TI_ADS7028_ENABLED
+	select SPI
+	select CRC if $(dt_compat_any_has_prop,$(DT_COMPAT_TI_ADS7028),$(ADS7028_PROP_CRC),True)
+	help
+	  Enable the driver for the Texas Instruments ADS7028 8 channel,
+	  12 bit SAR ADC with SPI interface.
+
+if ADC_ADS7028
+
+config ADC_ADS7028_INIT_PRIORITY
+	int "Init priority"
+	default 80
+	help
+	  Device initialization priority, must be after the SPI bus.
+
+config ADC_ADS7028_ACQUISITION_THREAD_STACK_SIZE
+	int "Acquisition work queue stack size"
+	default 768
+	help
+	  Stack size of the work queue that runs the SPI transfers of a read.
+	  The work queue is shared by all ADS7028 instances.
+
+config ADC_ADS7028_ACQUISITION_THREAD_PRIO
+	int "Acquisition work queue priority"
+	default 0
+	help
+	  Priority of the work queue thread that runs the SPI transfers of a
+	  read. The work queue is shared by all ADS7028 instances.
+
+endif # ADC_ADS7028
