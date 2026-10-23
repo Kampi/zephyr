@@ -649,6 +649,16 @@
 				drdy-gpios = <&test_gpio 0 GPIO_ACTIVE_LOW>;
 				#io-channel-cells = <1>;
 			};
+
+			test_spi_ads7028: ads7028@35 {
+				compatible = "ti,ads7028";
+				reg = <0x35>;
+				spi-max-frequency = <4000000>;
+				#io-channel-cells = <1>;
+				ti,crc;
+				ti,append-status = "channel-id";
+				ti,auto-sequence;
+			};
 		};
 	};
 };
